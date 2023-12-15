@@ -1,0 +1,37 @@
+using Microsoft.EntityFrameworkCore;
+using PasswordManagerApi.Models;
+using PasswordManagerApi.Database;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext<PasswordManagerContext>(opt => opt.UseInMemoryDatabase("PasswordManager"));
+builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
+// Add services to the container.
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
+
+app.MapPost("/users", async (User todo, PasswordManagerContext db) =>
+{
+    db.Users.Add(todo);
+    await db.SaveChangesAsync();
+
+    return Results.Created($"/users/{todo.UserId}", todo);
+});
+
+app.MapGet("/users", async (PasswordManagerContext todo) =>
+    await todo.Users.ToListAsync());
+
+app.Run();
